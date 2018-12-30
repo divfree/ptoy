@@ -1,19 +1,16 @@
-/*
-  PARTICLES SYSTEM
-*/
 #pragma once
 
-#include "geometry.hpp"
 #include <vector>
 #include <iostream>
 #include <functional>
 #include <memory>
 #include <mutex>
-#include "blocks.hpp"
 #include <atomic>
 #include <set>
-
 #include <x86intrin.h>
+
+#include "geometry.hpp"
+#include "blocks.hpp"
 
 using std::endl;
 using std::vector;
