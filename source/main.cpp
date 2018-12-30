@@ -16,7 +16,6 @@ int main() {
 
   Cont<Vect> pp = {Vect(0)};
 
-
   cl.Reinit(pp, MIdx(3), Vect(0), Vect(1));
 
   return 0;
