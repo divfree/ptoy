@@ -10,6 +10,7 @@
 
 #include "cell.h"
 #include "renderer.hpp"
+#include "engine.h"
 
 
 /*
@@ -40,7 +41,8 @@ std::atomic<bool> pause;
 
 CellList cl;
 renderer R;
-Cont<Vect> pp;
+Cont<Vect> pp, vv;
+Engine en;
 
 using std::cout;
 using std::endl;
@@ -66,6 +68,9 @@ void init() {
       pp.emplace_back(x, y);
     }
   }
+  vv.resize(pp.size());
+
+  cl.Reinit(pp, MIdx(10, 10), -d, d);
 }
 
 /* Callback functions for GLUT */
@@ -134,7 +139,10 @@ void display(void)
     G->R->DrawAll();
     G->PS->SetRendererReadyForNext(true);
     */
-    R.draw_particles(pp);
+    R.draw_particles(pp, cl.GetCellIdx());
+    en.Step(pp, vv);
+    Vect d(1);
+    cl.Reinit(pp, MIdx(10, 10), -d, d);
   }
 
   glFlush();

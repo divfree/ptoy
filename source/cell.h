@@ -54,6 +54,7 @@ class CellList {
       // set kkc_ to end of list
       std::partial_sum(nnc_.begin(), nnc_.end(), kkc_.begin());
       assert(kkc_.back() == pp.size());
+      nnc_.push_back(pp.size());
 
       qq_.resize(pp.size());
       ccq_.resize(pp.size());
@@ -66,6 +67,15 @@ class CellList {
         ccq_[q] = c;
       }
     }
+  }
+  const Cont<Size>& GetPartIdx() const {
+    return qq_;
+  }
+  const Cont<Size>& GetOffset() const {
+    return kkc_;
+  }
+  const Cont<Size>& GetCellIdx() const {
+    return ccq_;
   }
 
  private:
