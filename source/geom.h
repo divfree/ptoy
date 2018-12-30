@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "vect.h"
 #include "aligned_allocator.hpp"
 

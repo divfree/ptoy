@@ -27,90 +27,69 @@ class GVect {
   using value_type = Scal;
 
  private:
-  std::array<Scal, dim> comp_;
+  std::array<Scal, dim> aa_;
 
  public:
   friend void swap(GVect& first, GVect& second) {
     using std::swap;
-    swap(first.comp_, second.comp_);
+    swap(first.aa_, second.aa_);
   }
-  GVect() {}
-  GVect(const GVect& vect)
-      : comp_(vect.comp_)
-  {}
+  GVect() = default;
+  GVect(const GVect& o) = default;
   size_t size() const {
-    return comp_.size();
+    return aa_.size();
   }
-  explicit GVect(Scal value) {
-    std::fill(comp_.begin(), comp_.end(), value);
+
+  // TODO: extend to dim > 2
+  explicit GVect(Scal a) : aa_{a, a} {}
+  explicit GVect(Scal a0, Scal a1) : aa_({a0, a1}) {}
+
+  template <class, size_t>
+  friend class GVect;
+
+  template <class T>
+  explicit GVect(const GVect<T, dim>& o) {
+    std::copy(o.aa_.begin(), o.aa_.end(), aa_.begin());
   }
-  template <class... Args>
-  explicit GVect(Scal first, Args... args)
-      : comp_{{first, args...}}
-  {
-    constexpr size_t num_args = 1 + sizeof...(args);
-    static_assert(
-        num_args == dim,
-        "Vect braced initializer must contain exactly 'dim' arguments");
-  }
-  template <class OtherScal>
-  explicit GVect(const GVect<OtherScal, dim>& other) {
-    for (size_t i = 0; i < dim; ++i) {
-      comp_[i] = static_cast<Scal>(other[i]);
+
+  template <class T>
+  explicit GVect(const std::vector<T>& v) {
+    for (size_t i = 0; i < std::min<size_t>(dim, v.size()); ++i) {
+      aa_[i] = static_cast<Scal>(v[i]);
     }
   }
-  template <class OtherScal>
-  explicit GVect(const std::vector<OtherScal>& v) {
-    // TODO dim instead of dim_ causes linker error
-    for (size_t i = 0; i < std::min<size_t>(dim_, v.size()); ++i) {
-      comp_[i] = static_cast<Scal>(v[i]);
-    }
-  }
-  template <class OtherScal>
-  explicit GVect(const std::array<OtherScal, dim>& v) {
-    // TODO dim instead of dim_ causes linker error
-    for (size_t i = 0; i < std::min<size_t>(dim_, v.size()); ++i) {
-      comp_[i] = static_cast<Scal>(v[i]);
-    }
-  }
-  template <class OtherScal>
-  explicit GVect(const OtherScal* v) {
-    // TODO dim instead of dim_ causes linker error
-    for (size_t i = 0; i < dim_; ++i) {
-      comp_[i] = static_cast<Scal>(v[i]);
-    }
-  }
+  explicit GVect(const std::array<Scal, dim>& aa) : aa_(aa) {}
   GVect& operator=(GVect other) {
-    comp_ = other.comp_;
+    aa_ = other.aa_;
     return *this;
   }
   Scal& operator[](size_t i) {
-    return comp_[i];
+    return aa_[i];
   }
   const Scal& operator[](size_t i) const {
-    return comp_[i];
+    return aa_[i];
   }
   GVect& operator+=(const GVect& vect) {
     for (size_t i = 0; i < dim; ++i) {
-      comp_[i] += vect.comp_[i];
+      aa_[i] += vect.aa_[i];
     }
     return *this;
   }
   GVect& operator-=(const GVect& other) {
     for (size_t i = 0; i < dim; ++i) {
-      comp_[i] -= other.comp_[i];
+      aa_[i] -= other.aa_[i];
     }
     return *this;
   }
   GVect& operator*=(Scal k) {
     for (size_t i = 0; i < dim; ++i) {
-      comp_[i] *= k;
+      aa_[i] *= k;
     }
     return *this;
   }
   GVect& operator/=(Scal k) {
     for (size_t i = 0; i < dim; ++i) {
-      comp_[i] /= k;
+      aa_[i] /= k;
     }
     return *this;
   }
@@ -142,7 +121,7 @@ class GVect {
   }
   GVect& operator*=(const GVect& other) {
     for (size_t i = 0; i < dim; ++i) {
-      comp_[i] *= other.comp_[i];
+      aa_[i] *= other.aa_[i];
     }
     return *this;
   }
@@ -153,7 +132,7 @@ class GVect {
   }
   GVect& operator/=(const GVect& other) {
     for (size_t i = 0; i < dim; ++i) {
-      comp_[i] /= other.comp_[i];
+      aa_[i] /= other.aa_[i];
     }
     return *this;
   }
@@ -164,7 +143,7 @@ class GVect {
   }
   bool operator==(const GVect& other) const {
     for (size_t i = 0; i < dim; ++i) {
-      if (!(comp_[i] == other.comp_[i])) {
+      if (!(aa_[i] == other.aa_[i])) {
         return false;
       }
     }
@@ -175,7 +154,7 @@ class GVect {
   }
   bool operator<(const GVect& other) const {
     for (size_t i = 0; i < dim; ++i) {
-      if (!(comp_[i] < other.comp_[i])) {
+      if (!(aa_[i] < other.aa_[i])) {
         return false;
       }
     }
@@ -183,14 +162,14 @@ class GVect {
   }
   bool operator<=(const GVect& other) const {
     for (size_t i = 0; i < dim; ++i) {
-      if (!(comp_[i] <= other.comp_[i])) {
+      if (!(aa_[i] <= other.aa_[i])) {
         return false;
       }
     }
     return true;
   }
   bool lexless(const GVect& o) const {
-    return comp_ < o.comp_;
+    return aa_ < o.aa_;
   }
   // TODO: remove, replace with GVect(0)
   static const GVect kZero;
@@ -203,7 +182,7 @@ class GVect {
   Scal sqrnorm() const {
     Scal res = 0;
     for (size_t i = 0; i < dim; ++i) {
-      res += sqr(comp_[i]);
+      res += sqr(aa_[i]);
     }
     return res;
   }
@@ -213,12 +192,12 @@ class GVect {
   Scal dot(const GVect& other) const {
     Scal sum = 0;
     for (size_t i = 0; i < dim; ++i) {
-      sum += comp_[i] * other.comp_[i];
+      sum += aa_[i] * other.aa_[i];
     }
     return sum;
   }
   Scal cross_third(const GVect& other) const {
-    return comp_[0] * other.comp_[1] - comp_[1] * other.comp_[0];
+    return aa_[0] * other.aa_[1] - aa_[1] * other.aa_[0];
   }
   GVect cross(const GVect& other) const {
     const GVect& a = *this;
@@ -238,49 +217,49 @@ class GVect {
   Scal sum() const {
     Scal r = 0;
     for (size_t i = 0; i < dim; ++i) {
-      r += comp_[i];
+      r += aa_[i];
     }
     return r;
   }
   Scal prod() const {
-    Scal r = comp_[0];
+    Scal r = aa_[0];
     for (size_t i = 1; i < dim; ++i) {
-      r *= comp_[i];
+      r *= aa_[i];
     }
     return r;
   }
   Scal norm1() const {
     Scal r = 0;
     for (size_t i = 0; i < dim; ++i) {
-      r += std::abs(comp_[i]);
+      r += std::abs(aa_[i]);
     }
     return r;
   }
   Scal norminf() const {
     Scal r = 0;
     for (size_t i = 0; i < dim; ++i) {
-      r = std::max(r, std::abs(comp_[i]));
+      r = std::max(r, std::abs(aa_[i]));
     }
     return r;
   }
   Scal max() const {
-    Scal r = comp_[0];
+    Scal r = aa_[0];
     for (size_t i = 1; i < dim; ++i) {
-      r = std::max(r, comp_[i]);
+      r = std::max(r, aa_[i]);
     }
     return r;
   }
   Scal min() const {
-    Scal r = comp_[0];
+    Scal r = aa_[0];
     for (size_t i = 1; i < dim; ++i) {
-      r = std::min(r, comp_[i]);
+      r = std::min(r, aa_[i]);
     }
     return r;
   }
   size_t argmax() const {
     size_t r = 0;
     for (size_t i = 1; i < dim; ++i) {
-      if (comp_[i] > comp_[r]) {
+      if (aa_[i] > aa_[r]) {
         r = i;
       }
     }
@@ -289,7 +268,7 @@ class GVect {
   size_t argmin() const {
     size_t r = 0;
     for (size_t i = 1; i < dim; ++i) {
-      if (comp_[i] < comp_[r]) {
+      if (aa_[i] < aa_[r]) {
         r = i;
       }
     }
@@ -305,7 +284,7 @@ class GVect {
   // TODO: revise, may lead to undesired conversion
   template <class T=Scal>
   operator std::vector<T>() const {
-    return std::vector<T>(comp_.begin(), comp_.end());
+    return std::vector<T>(aa_.begin(), aa_.end());
   }
   class LexLess {
    public:

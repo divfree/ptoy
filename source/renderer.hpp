@@ -1,17 +1,22 @@
-/*
-  RENDERER
-*/
-
-#include "geometry.hpp"
-#include "particles_system.hpp"
-#include <GL/glut.h>
 #include <iostream>
 #include <functional>
+#include <GL/glut.h>
+
+#include "geom.h"
+
+//#include "geometry.hpp"
+//#include "particles_system.hpp"
+
+struct rgb
+{
+  float r,g,b;
+  rgb(float _r, float _g, float _b) : r(_r), g(_g), b(_b) {;}
+  rgb() {;}
+};
 
 class renderer
 {
   int width_, height_;
-  particles_system* PS;
 public:
   void SetWindowSize(int width, int height) {
     width_ = width;
@@ -22,7 +27,7 @@ public:
     glColor3f(color.r, color.g, color.b);
 
     const size_t num_segments = 8;
-    const Scal theta = 2 * PI / num_segments;
+    const Scal theta = 2 * M_PI / num_segments;
     const Scal c = cos(theta);
     const Scal s = sin(theta);
     Scal dx = r;
@@ -41,12 +46,10 @@ public:
 
     glEnd();
   }
-  void draw_circle(vect c, Scal r, rgb color) {
-    draw_circle(c.x, c.y, r, color);
+  void draw_circle(Vect c, Scal r, rgb color) {
+    draw_circle(c[0], c[1], r, color);
   }
-  void draw_circle(mindex c, int r, rgb color) {
-    draw_circle(c.i, c.j, r, color);
-  }
+  /*
   void draw_line(vect A, vect B, rgb color) {
     glColor3f(color.r, color.g, color.b);
     glBegin(GL_LINES); // OR GL_LINE_LOOP
@@ -69,28 +72,25 @@ public:
 
     glEnd();
   }
-  void draw_particles()
-  {
+  */
+  void draw_particles(const Cont<Vect>& pp) {
+    const Scal kRadius = 0.02;
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    vect A(-1.,-1.), B(-1 + 2. * width_ / 800, -1. + 2. * height_ / 800);
-    glOrtho(A.x, B.x, A.y, B.y, -1.f, 1.f);
-    auto particles = PS->GetParticles();
-    for(std::size_t k=0; k<particles.size(); ++k)
-    {
-      auto& part=particles[k];
-      //vect p=part.p;
-      Scal f = 0.5 + part.v.length() / 7.; // color intensity
+    Vect A(-1.,-1.);
+    Vect B(-1 + 2. * width_ / 800, -1. + 2. * height_ / 800);
+    glOrtho(A[0], B[0], A[1], B[1], -1.f, 1.f);
+    for(Size q = 0; q < pp.size(); ++q) {
+      //Scal f = 0.5 + part.v.length() / 7.; // color intensity
+      Scal f = 1.;
       f = std::min<Scal>(std::max<Scal>(f, 0.), 1.);
-      //auto c = part.color;
-      //rgb color(c.r * f, c.g * f, c.b * f);
       rgb color(f, 0., 0.);
-      //draw_circle(part.p, part.r, color);
-      draw_circle(part.p, kRadius * 0.9, color);
+      draw_circle(pp[q], kRadius * 0.9, color);
     }
     glPopMatrix();
   }
+  /*
   void draw_frame()
   {
     glPushMatrix();
@@ -181,5 +181,6 @@ public:
     DrawFrozen();
     DrawPortals();
   }
-  renderer(particles_system* _PS) : PS(_PS) {}
+  */
+  //renderer(particles_system* _PS) : PS(_PS) {}
 };
