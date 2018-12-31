@@ -7,6 +7,7 @@
 #include <omp.h>
 #endif
 #include <SDL2/SDL.h>
+#include <utility>
 
 #include "cell.h"
 #include "renderer.hpp"
@@ -33,6 +34,11 @@ Engine en;
 
 using std::cout;
 using std::endl;
+
+std::pair<Vect, Vect> GetDomain() {
+  Vect d0(-1.,-1.), d1(-1 + 2. * width / 800, -1. + 2. * height / 800);
+  return std::make_pair(d0, d1);
+}
 
 void init() {
   width  = 800.0;
@@ -161,12 +167,19 @@ void cycle()
 
   while (!quit) {
     {
+      auto d01 = GetDomain();
+      Vect d0 = d01.first;
+      Vect d1 = d01.second;
+
       Cont<Vect> ppt, vvt;
       auto& kkc = cl.GetOffset();
       auto& qq = cl.GetPartIdx();
       for (Size k = 0; k < kkc.back(); ++k) {
-        ppt.push_back(pp[qq[k]]);
-        vvt.push_back(vv[qq[k]]);
+        auto p = pp[qq[k]];
+        if (d0 <= p && p <= d1) {
+          ppt.push_back(p);
+          vvt.push_back(vv[qq[k]]);
+        }
       }
       std::swap(ppt, pp);
       std::swap(vvt, vv);

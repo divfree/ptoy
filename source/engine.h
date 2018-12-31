@@ -63,7 +63,7 @@ class Engine {
                        const Vect* ppo, Size no) { for (Size i = 0; i < n; ++i) {
       for (Size j = 0; j < no; ++j) {
         if (pp[i] != ppo[j]) {
-          ff[i] += F12(pp[i], ppo[j], kRadius, kSigma);
+          ff[i] += F12(pp[i], ppo[j], 2 * kRadius, kSigma);
         }
       }
     }
@@ -145,7 +145,7 @@ class Engine {
     auto& kkc = cl.GetOffset();
     auto& qq = cl.GetPartIdx();
 
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(static)
     for (Size j = 0; j < dims[1]; ++j) {
       for (Size i = 0; i < dims[0]; ++i) {
         Size c = j * dims[0] + i;
@@ -159,7 +159,7 @@ class Engine {
               for (Size k = kkc[c]; k < kkc[c + 1]; ++k) {
                 for (Size ko = kkc[co]; ko < kkc[co + 1]; ++ko) {
                   if (k != ko) {
-                    ff[qq[k]] += F12(pp[qq[k]], pp[qq[ko]], kRadius, kSigma);
+                    ff[qq[k]] += F12(pp[qq[k]], pp[qq[ko]], 2 * kRadius, kSigma);
                   }
                 }
               }
