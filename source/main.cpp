@@ -45,7 +45,7 @@ void init() {
   const size_t rows = 40;
   const size_t columns = 40;
   Vect d(columns * 2. * kRadius, rows * std::sqrt(3.) * kRadius);
-  Vect d0(-0.5 * d[0], -0.5 * d[1]);
+  Vect d0(-0.5 * d[0], -0.5 * d[1] + 0.2);
   Vect d1(0.5 * d[0], -1. + d[1]);
   for (size_t j = 0; j < rows; ++j) {
     for (size_t i = 0; i < columns; ++i) {
@@ -124,7 +124,7 @@ void display(void)
     G->R->DrawAll();
     G->PS->SetRendererReadyForNext(true);
     */
-    R.draw_particles(pp, cl.GetCellIdx());
+    R.draw_particles(pp, vv);
   }
 
   glFlush();
@@ -160,6 +160,17 @@ void cycle()
   }
 
   while (!quit) {
+    {
+      Cont<Vect> ppt, vvt;
+      auto& kkc = cl.GetOffset();
+      auto& qq = cl.GetPartIdx();
+      for (Size k = 0; k < kkc.back(); ++k) {
+        ppt.push_back(pp[qq[k]]);
+        vvt.push_back(vv[qq[k]]);
+      }
+      std::swap(ppt, pp);
+      std::swap(vvt, vv);
+    }
     en.Step(pp, vv, cl, t);
     //G->PS->step(next_game_time_target, pause);
     //std::this_thread::sleep_for(milliseconds(50));
@@ -175,7 +186,7 @@ void cycle()
 Vect GetDomainMousePosition(int x, int y) {
   Vect c;
   Vect d0(-1.,-1.), d1(-1 + 2. * width / 800, -1. + 2. * height / 800);
-  return d0 + (d1 - d0) * Vect(x, y) / Vect(width, height);
+  return d0 + (d1 - d0) * Vect(x, height - y) / Vect(width, height);
 }
 
 Vect GetDomainMousePosition() {
@@ -296,7 +307,7 @@ int main() {
       } else if (e.type == SDL_MOUSEMOTION) {
         switch (mouse_state) {
           case MouseState::Force:
-            //G->PS->SetForce(GetDomainMousePosition());
+            en.SetForce(GetDomainMousePosition());
             break;
           case MouseState::Bonds:
             //G->PS->BondsMove(GetDomainMousePosition());
@@ -316,7 +327,7 @@ int main() {
       } else if (e.type == SDL_MOUSEBUTTONDOWN) {
         switch (mouse_state) {
           case MouseState::Force:
-            //G->PS->SetForce(GetDomainMousePosition(), true);
+            en.SetForce(GetDomainMousePosition(), true);
             break;
           case MouseState::Bonds:
             //G->PS->BondsStart(GetDomainMousePosition());
@@ -336,7 +347,7 @@ int main() {
       } else if (e.type == SDL_MOUSEBUTTONUP) {
         switch (mouse_state) {
           case MouseState::Force:
-            //G->PS->SetForce(false);
+            en.SetForce(false);
             break;
           case MouseState::Bonds:
             //G->PS->BondsStop(GetDomainMousePosition());

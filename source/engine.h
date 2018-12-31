@@ -12,6 +12,16 @@
 
 class Engine {
  public:
+  void SetForce(Vect p, bool s) {
+    fr_p_ = p;
+    fr_s_ = s;
+  }
+  void SetForce(bool s) {
+    fr_s_ = s;
+  }
+  void SetForce(Vect p) {
+    fr_p_ = p;
+  }
   void Step(Cont<Vect>& pp, Cont<Vect>& vv, CellList& cl, Scal& t) {
     auto ppt = pp;
     auto vvt = vv;
@@ -21,7 +31,7 @@ class Engine {
       auto ff = Rhs(pp, vv, cl);
       Scal dth = dt * 0.5;
       for (Size q = 0; q < pp.size(); ++q) {
-        vvt[q] += ff[q] * dth;
+        vvt[q] += ff[q] * dth / kMass;
         ppt[q] += vvt[q] * dth;
       }
     }
@@ -29,7 +39,7 @@ class Engine {
     {
       auto ff = Rhs(ppt, vvt, cl);
       for (Size q = 0; q < pp.size(); ++q) {
-        vv[q] += ff[q] * dt;
+        vv[q] += ff[q] * dt / kMass;
         pp[q] += vv[q] * dt;
       }
       t += dt;
@@ -50,8 +60,7 @@ class Engine {
   // ppo: other positions
   // no: other number
   void CalcForceSerial(Vect* ff, const Vect* pp, Size n, 
-                       const Vect* ppo, Size no) {
-    for (Size i = 0; i < n; ++i) {
+                       const Vect* ppo, Size no) { for (Size i = 0; i < n; ++i) {
       for (Size j = 0; j < no; ++j) {
         if (pp[i] != ppo[j]) {
           ff[i] += F12(pp[i], ppo[j], kRadius, kSigma);
@@ -61,6 +70,7 @@ class Engine {
   }
   void CalcForceAvx(Vect* ff, const Vect* pp, Size n, 
                     const Vect* ppo, Size no) {
+    return;
     using M = const __m256;
     // sigma = kSigma;
     M sigma = _mm256_broadcast_ss(&kSigma);
@@ -134,17 +144,11 @@ class Engine {
     const MIdx dims = cl.GetDims();
     auto& kkc = cl.GetOffset();
     auto& qq = cl.GetPartIdx();
+
+    #pragma omp parallel for schedule(dynamic)
     for (Size j = 0; j < dims[1]; ++j) {
       for (Size i = 0; i < dims[0]; ++i) {
         Size c = j * dims[0] + i;
-        std::vector<Vect> lpp;
-        std::vector<Size> lqq;
-        for (Size k = kkc[c]; k < kkc[c + 1]; ++k) {
-          lqq.push_back(qq[k]);
-          lpp.push_back(pp[qq[k]]);
-        }
-
-        std::vector<Vect> lppo;
 
         for (int dj = -1; dj <= 1; ++dj) {
           for (int di = -1; di <= 1; ++di) {
@@ -152,38 +156,32 @@ class Engine {
             int jj = j + dj;
             if (ii >= 0 && ii < dims[0] && jj >= 0 && jj < dims[1]) {
               Size co = jj * dims[0] + ii;
-              for (Size k = kkc[co]; k < kkc[co + 1]; ++k) {
-                lppo.push_back(pp[qq[k]]);
+              for (Size k = kkc[c]; k < kkc[c + 1]; ++k) {
+                for (Size ko = kkc[co]; ko < kkc[co + 1]; ++ko) {
+                  if (k != ko) {
+                    ff[qq[k]] += F12(pp[qq[k]], pp[qq[ko]], kRadius, kSigma);
+                  }
+                }
               }
             }
           }
         }
+      }
+    }
 
-        std::vector<Vect> lff(lpp.size(), Vect(0));
-        CalcForceSerial(lff.data(), lpp.data(), lpp.size(), 
-            lppo.data(), lppo.size());
-
-        for (Size i = 0; i < lqq.size(); ++i) {
-          ff[lqq[i]] += lff[i];
+    if (fr_s_) {
+      for (Size q = 0; q < pp.size(); ++q) {
+        Vect r = fr_p_ - pp[q];
+        if (r.norm() > kRadius) {
+          ff[q] += r * (kPointForceAttractive / std::pow(r.norm(), 3));
         }
       }
     }
 
-    if (0) {
-      std::fill(ff.begin(), ff.end(), Vect(0));
-      //CalcForceSerial(ff.data(), pp.data(), pp.size(), pp.data(), pp.size());
-      CalcForceAvx(ff.data(), pp.data(), pp.size(), pp.data(), pp.size());
-    }
-
-    for (Size q = 0; q < pp.size(); ++q) {
-      Vect r = -pp[q];
-      if (r.norm() > kRadius) {
-        ff[q] += r * (kPointForceAttractive / std::pow(r.norm(), 3));
-      }
-      //ff[q] -= vv[q] * (kDissipation * kMass);
-      //ff[q] -= vv[q] * 1.;
-    }
-
     return ff;
   }
+
+ private:
+  Vect fr_p_;
+  bool fr_s_ = false;
 };

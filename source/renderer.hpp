@@ -73,7 +73,7 @@ public:
     glEnd();
   }
   */
-  void draw_particles(const Cont<Vect>& pp, const Cont<Size>& ccq) {
+  void draw_particles(const Cont<Vect>& pp, const Cont<Vect>& vv) {
     const Scal kRadius = 0.02;
     glPushMatrix();
     glMatrixMode(GL_PROJECTION);
@@ -82,9 +82,10 @@ public:
     Vect B(-1 + 2. * width_ / 800, -1. + 2. * height_ / 800);
     glOrtho(A[0], B[0], A[1], B[1], -1.f, 1.f);
     for(Size q = 0; q < pp.size(); ++q) {
-      //Scal f = 0.5 + part.v.length() / 7.; // color intensity
-      auto e = 100;
-      Scal f = Scal(ccq[q] % e) / (e + 1);
+      Scal f = 0.5 + vv[q].norm() / 7.; // color intensity
+      //auto e = 1000;
+      //Scal f = Scal(ccq[q] % e) / (e + 1);
+      //Scal f = Scal(q % e) / (e + 1);
       f = std::min<Scal>(std::max<Scal>(f, 0.), 1.);
       rgb color(f, 0., 0.);
       draw_circle(pp[q], kRadius * 0.9, color);
