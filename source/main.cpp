@@ -55,7 +55,6 @@ void init() {
   pause = false;
 
   pp.clear();
-  const Scal kRadius = 0.02;
   const size_t rows = 40;
   const size_t columns = 40;
   Vect d(columns * 2. * kRadius, rows * std::sqrt(3.) * kRadius);
