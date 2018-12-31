@@ -12,20 +12,6 @@
 #include "renderer.hpp"
 #include "engine.h"
 
-
-/*
-int main() {
-
-  std::vector<float> a = {0., 1};
-
-  Cont<Vect> pp = {Vect(0)};
-
-  cl.Reinit(pp, MIdx(3), Vect(0), Vect(1));
-
-  return 0;
-}
-*/
-
 using namespace std::chrono;
 
 milliseconds last_frame_time;
@@ -42,6 +28,7 @@ std::atomic<bool> pause;
 CellList cl;
 renderer R;
 Cont<Vect> pp, vv;
+Scal t = 0.;
 Engine en;
 
 using std::cout;
@@ -58,7 +45,7 @@ void init() {
   const size_t rows = 40;
   const size_t columns = 40;
   Vect d(columns * 2. * kRadius, rows * std::sqrt(3.) * kRadius);
-  Vect d0(-0.5 * d[0], -1.);
+  Vect d0(-0.5 * d[0], -0.5 * d[1]);
   Vect d1(0.5 * d[0], -1. + d[1]);
   for (size_t j = 0; j < rows; ++j) {
     for (size_t i = 0; i < columns; ++i) {
@@ -68,7 +55,6 @@ void init() {
     }
   }
   vv.resize(pp.size());
-
   cl.Reinit(pp, MIdx(10, 10), -d, d);
 }
 
@@ -94,7 +80,7 @@ void display(void)
   //std::this_thread::sleep_for(frame_duration);
 
   auto new_frame_time = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch());
-  auto new_frame_game_time = 0.;
+  auto new_frame_game_time = t;
 
 
   const Scal frame_real_duration_s =
@@ -107,13 +93,13 @@ void display(void)
         << (new_frame_game_time -
             last_frame_game_time) / frame_real_duration_s
         << ", particles="
-        << 0
+        << pp.size()
         //<< ", max_per_cell="
         //<< G->PS->GetNumPerCell()
         << ", t="
-        << 0
-        << ", steps="
-        << 0
+        << t
+        << ", dims="
+        << cl.GetDims()
         << std::endl;
     last_report_time = new_frame_time;
     //G->PS->Blocks.print_status();
@@ -139,9 +125,6 @@ void display(void)
     G->PS->SetRendererReadyForNext(true);
     */
     R.draw_particles(pp, cl.GetCellIdx());
-    en.Step(pp, vv);
-    Vect d(1);
-    cl.Reinit(pp, MIdx(10, 10), -d, d);
   }
 
   glFlush();
@@ -177,6 +160,7 @@ void cycle()
   }
 
   while (!quit) {
+    en.Step(pp, vv, cl, t);
     //G->PS->step(next_game_time_target, pause);
     //std::this_thread::sleep_for(milliseconds(50));
     if (pause) {

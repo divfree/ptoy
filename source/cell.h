@@ -54,7 +54,7 @@ class CellList {
       // set kkc_ to end of list
       std::partial_sum(nnc_.begin(), nnc_.end(), kkc_.begin());
       assert(kkc_.back() == pp.size());
-      nnc_.push_back(pp.size());
+      kkc_.push_back(pp.size());
 
       qq_.resize(pp.size());
       ccq_.resize(pp.size());
